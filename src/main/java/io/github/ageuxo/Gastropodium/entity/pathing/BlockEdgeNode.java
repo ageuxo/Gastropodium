@@ -1,5 +1,7 @@
 package io.github.ageuxo.Gastropodium.entity.pathing;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
@@ -12,6 +14,12 @@ public class BlockEdgeNode extends Node{
     protected final int z;
     public final Direction edge;
     public BlockEdgeNode cameFrom;
+    public static Codec<BlockEdgeNode> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            Codec.INT.fieldOf("x").forGetter(BlockEdgeNode::getX),
+            Codec.INT.fieldOf("y").forGetter(BlockEdgeNode::getY),
+            Codec.INT.fieldOf("z").forGetter(BlockEdgeNode::getZ),
+            Direction.CODEC.fieldOf("edge").forGetter(BlockEdgeNode::getEdge)
+    ).apply(instance, BlockEdgeNode::new));
 
     public BlockEdgeNode(int x, int y, int z, Direction edge) {
         super(x,y,z);
@@ -41,5 +49,21 @@ public class BlockEdgeNode extends Node{
     @Override
     public @NotNull String toString() {
         return "BlockEdgeNode{" + "x=" + x + ", y=" + y + ", z=" + z + ", edge=" + edge + '}';
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public int getZ() {
+        return z;
+    }
+
+    public Direction getEdge() {
+        return edge;
     }
 }

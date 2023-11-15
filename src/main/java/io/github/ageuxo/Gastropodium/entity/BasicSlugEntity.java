@@ -51,10 +51,10 @@ public class BasicSlugEntity extends Animal implements BlockEdgeCrawler {
         if (!this.isAttached){
             boolean hasAttached = attach(this, this.blockPosition());
             this.isAttached = hasAttached;
-            this.setNoGravity(hasAttached);
+//            this.setNoGravity(hasAttached);
         } else if (!canStandOn(this, this.level().getBlockState(this.getOnPos()), this.blockPosition(), this.attachDirection.getOpposite())){
             this.isAttached = false;
-            this.setNoGravity(false);
+//            this.setNoGravity(false);
         }
         profiler.pop();
     }

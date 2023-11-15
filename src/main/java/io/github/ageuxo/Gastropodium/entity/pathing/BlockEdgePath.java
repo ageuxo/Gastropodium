@@ -1,5 +1,7 @@
 package io.github.ageuxo.Gastropodium.entity.pathing;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
@@ -20,6 +22,11 @@ public class BlockEdgePath extends Path{
     private final List<BlockEdgeNode> edgeNodes;
     private final float distToTarget;
     private int nextIndex = 0;
+    public static Codec<BlockEdgePath> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            BlockEdgeNode.CODEC.listOf().fieldOf("nodes").forGetter(BlockEdgePath::getEdgeNodes),
+            BlockEdgeNode.CODEC.fieldOf("target").forGetter(BlockEdgePath::getTargetNode),
+            Codec.BOOL.fieldOf("reached").forGetter(BlockEdgePath::canReach)
+    ).apply(instance, BlockEdgePath::new));
 
     public BlockEdgePath(List<BlockEdgeNode> edgeNodes, BlockEdgeNode target, boolean reached) {
         super(edgeNodes.stream().map(edgeNode -> (Node)edgeNode).toList(), target.asBlockPos(), reached);
@@ -71,6 +78,10 @@ public class BlockEdgePath extends Path{
         return this.edgeNodes.get(index);
     }
 
+    public List<BlockEdgeNode> getEdgeNodes(){
+        return this.edgeNodes;
+    }
+
     @Override
     public BlockEdgeNode[] getOpenSet() {
         return openSet;
@@ -84,6 +95,10 @@ public class BlockEdgePath extends Path{
     @Override
     public BlockPos getTarget() {
         return this.target.asBlockPos();
+    }
+
+    public BlockEdgeNode getTargetNode(){
+        return this.target;
     }
 
     @Override

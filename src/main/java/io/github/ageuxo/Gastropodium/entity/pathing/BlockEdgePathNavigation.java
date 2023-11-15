@@ -2,6 +2,8 @@ package io.github.ageuxo.Gastropodium.entity.pathing;
 
 import com.google.common.collect.ImmutableSet;
 import io.github.ageuxo.Gastropodium.mixins.PathNavigationAccessor;
+import io.github.ageuxo.Gastropodium.network.BlockEdgePathDebugS2CPacket;
+import io.github.ageuxo.Gastropodium.network.PacketHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
@@ -14,6 +16,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.PathNavigationRegion;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +37,15 @@ public class BlockEdgePathNavigation extends PathNavigation {
         }
         int i = Mth.floor(pMob.getAttributeValue(Attributes.FOLLOW_RANGE) * 16.0D);
         this.edgePathFinder = this.createPathFinder(i);
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (!this.level.isClientSide){
+            PacketHandler.INSTANCE.send(PacketDistributor.TRACKING_ENTITY.with(()->this.mob),
+                    new BlockEdgePathDebugS2CPacket((BlockEdgePath) this.path, this.level, this.mob.getId(), this.maxDistanceToWaypoint));
+        }
     }
 
     @Nullable
