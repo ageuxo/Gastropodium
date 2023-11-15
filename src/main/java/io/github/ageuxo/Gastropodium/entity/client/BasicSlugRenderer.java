@@ -1,6 +1,7 @@
 package io.github.ageuxo.Gastropodium.entity.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import io.github.ageuxo.Gastropodium.GastropodiumMod;
 import io.github.ageuxo.Gastropodium.entity.BasicSlugEntity;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -26,5 +27,12 @@ public class BasicSlugRenderer extends MobRenderer<BasicSlugEntity, BasicSlugMod
         }
 
         super.render(pEntity, pEntityYaw, pPartialTicks, pPoseStack, pBuffer, pPackedLight);
+    }
+
+    @Override
+    protected void setupRotations(@NotNull BasicSlugEntity slugEntity, @NotNull PoseStack pPoseStack, float pAgeInTicks, float pRotationYaw, float pPartialTicks) {
+        super.setupRotations(slugEntity, pPoseStack, pAgeInTicks, pRotationYaw, pPartialTicks);
+        pPoseStack.mulPose(Axis.XP.rotationDegrees(slugEntity.getXRot()));
+//        pPoseStack.mulPose(Axis.ZP.rotationDegrees(slugEntity.visZRot)); TODO implement this when pathing works
     }
 }

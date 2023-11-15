@@ -3,10 +3,12 @@ package io.github.ageuxo.Gastropodium.entity;
 import io.github.ageuxo.Gastropodium.entity.pathing.BlockEdgeCrawler;
 import io.github.ageuxo.Gastropodium.entity.pathing.BlockEdgeCrawlerMoveControl;
 import io.github.ageuxo.Gastropodium.entity.pathing.BlockEdgePathNavigation;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.AnimationState;
 import net.minecraft.world.entity.EntityType;
@@ -14,7 +16,6 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
-import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -25,6 +26,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class BasicSlugEntity extends Animal implements BlockEdgeCrawler {
+
+//    public float visXRot;
+//    public float visZRot; TODO implement this
 
     public BasicSlugEntity(EntityType<? extends Animal> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
@@ -39,10 +43,20 @@ public class BasicSlugEntity extends Animal implements BlockEdgeCrawler {
     @Override
     public void tick() {
         super.tick();
-
         if (this.level().isClientSide){
             setupAnimationStates();
         }
+        ProfilerFiller profiler = this.level().getProfiler();
+        profiler.push("slug_attach_check");
+        if (!this.isAttached){
+            boolean hasAttached = attach(this, this.blockPosition());
+            this.isAttached = hasAttached;
+            this.setNoGravity(hasAttached);
+        } else if (!canStandOn(this, this.level().getBlockState(this.getOnPos()), this.blockPosition(), this.attachDirection.getOpposite())){
+            this.isAttached = false;
+            this.setNoGravity(false);
+        }
+        profiler.pop();
     }
 
     @SuppressWarnings("deprecation")
@@ -86,12 +100,12 @@ public class BasicSlugEntity extends Animal implements BlockEdgeCrawler {
         return Animal.createLivingAttributes()
                 .add(Attributes.MAX_HEALTH, 10D)
                 .add(Attributes.MOVEMENT_SPEED, 0.1D)
-                .add(Attributes.FOLLOW_RANGE, 3.0D)
+                .add(Attributes.FOLLOW_RANGE, 8.0D)
                 .add(Attributes.ARMOR_TOUGHNESS, 0.1D);
     }
 
     @Override
-    protected @NotNull PathNavigation createNavigation(@NotNull Level pLevel) {
+    protected @NotNull BlockEdgePathNavigation createNavigation(@NotNull Level pLevel) {
         return new BlockEdgePathNavigation(this, pLevel);
     }
 
@@ -125,5 +139,11 @@ public class BasicSlugEntity extends Animal implements BlockEdgeCrawler {
     @Override
     public void setAttachDirection(Direction direction) {
         this.attachDirection = direction;
+    }
+
+    @Override
+    public @NotNull BlockPos getOnPos() {
+        Direction direction = getAttachDirection() != null ? getAttachDirection() : Direction.DOWN;
+        return this.blockPosition().relative(direction);
     }
 }

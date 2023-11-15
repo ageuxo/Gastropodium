@@ -1,5 +1,6 @@
 package io.github.ageuxo.Gastropodium.entity.pathing;
 
+import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
@@ -12,6 +13,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.PathNavigationRegion;
 import net.minecraft.world.level.pathfinder.*;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -21,9 +23,10 @@ import java.util.List;
 
 @ParametersAreNonnullByDefault
 public class BlockEdgeNodeEvaluator extends NodeEvaluator {
+    private static final Logger LOGGER = LogUtils.getLogger();
     protected PathNavigationRegion level;
     protected Mob mob;
-    protected final Int2ObjectMap<Node> nodes = new Int2ObjectOpenHashMap<>();
+    protected final Int2ObjectMap<BlockEdgeNode> nodes = new Int2ObjectOpenHashMap<>();
     protected int entityWidth;
     protected int entityHeight;
     protected int entityDepth;
@@ -41,45 +44,26 @@ public class BlockEdgeNodeEvaluator extends NodeEvaluator {
     }
 
     @Override
-    public @NotNull Node getStart() {
-        Node startNode = this.getNode(this.mob.blockPosition());
+    public @NotNull BlockEdgeNode getStart() {
+        BlockEdgeNode startNode = this.getEdgeNode(this.mob.blockPosition(), ((BlockEdgeCrawler)this.mob).getAttachDirection());
         startNode.type = this.getBlockPathType(this.mob, startNode.asBlockPos());
         startNode.costMalus = this.mob.getPathfindingMalus(startNode.type);
-
         return startNode;
     }
 
     @Override
-    public @NotNull Target getGoal(double pX, double pY, double pZ) {
-        return this.getTargetFromNode(this.getNode(Mth.floor(pX), Mth.floor(pY), Mth.floor(pZ)));
+    public @NotNull BlockEdgeTarget getGoal(double pX, double pY, double pZ) {
+        return this.nodes.values().stream().filter(node -> node.asBlockPos().equals(BlockPos.containing(pX, pY, pZ))).findFirst().map(BlockEdgeTarget::new).orElseThrow();
     }
 
-/*    @Override
-    public int getNeighbors(Node[] pOutputArray, Node pNode) {
-        int neighborCount = 0;
-        BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
-
-        Direction[] directions = Direction.orderedByNearest(this.mob);
-        // Iterate over 3x3 area around node
-        for (int relativeX = -1; relativeX < 1; relativeX++) {
-            mutableBlockPos.set(pNode.asBlockPos());
-            mutableBlockPos.move(directions[0], relativeX);
-            for (int relativeY = -1; relativeY < 1; relativeY++) {
-                mutableBlockPos.move(directions[1], relativeY);
-
-                BlockEdgeNode neighbor = this.getNode(mutableBlockPos);
-                if (isNeighborValid(neighbor, pNode)){
-                    pOutputArray[neighborCount++] = neighbor;
-                }
-            }
-        }
-        return neighborCount;
-    }*/
+    public BlockEdgeTarget getGoal(BlockEdgeNode edgeNode){
+        return new BlockEdgeTarget(edgeNode);
+    }
 
     @Override
     public int getNeighbors(Node[] outputArray, Node node){
-        BlockEdgeNode edgeNode = (BlockEdgeNode) node;
         int neighborCount = 0;
+        BlockEdgeNode edgeNode = (BlockEdgeNode) node;
         BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
         List<Direction> directions = new ArrayList<>();
         Collections.addAll(directions, Direction.values());
@@ -117,27 +101,12 @@ public class BlockEdgeNodeEvaluator extends NodeEvaluator {
         return this.level.getBlockState(mutableBlockPos).isPathfindable(level, mutableBlockPos, PathComputationType.LAND);
     }
 
-/*    @Override
-    protected @NotNull BlockEdgeNode getNode(BlockPos pPos) {
-        ArrayList<Direction> edges = new ArrayList<>();
-        BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
-        for (Direction direction : Direction.values()){
-            mutableBlockPos.set(pPos);
-            mutableBlockPos.move(direction);
-            if (!this.level.getBlockState(mutableBlockPos).isPathfindable(this.level, mutableBlockPos, PathComputationType.LAND)){
-                edges.add(direction);
-            }
-        }
-        return new BlockEdgeNode(pPos, edges);
-        //Remember that only edges are walkable
-    }*/
-
-    protected @Nullable BlockEdgeNode getEdgeNode(BlockPos pos, Direction edge){
+    protected BlockEdgeNode getEdgeNode(BlockPos pos, Direction edge){
         BlockPos checkPos = pos.relative(edge);
         if (!this.level.getBlockState(checkPos).isPathfindable(this.level, checkPos, PathComputationType.LAND)){
             return new BlockEdgeNode(pos, edge);
         } else {
-            return null;
+            return new  BlockEdgeNode(pos, Direction.DOWN);
         }
     }
 

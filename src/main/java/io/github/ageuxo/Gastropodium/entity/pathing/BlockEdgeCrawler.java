@@ -12,30 +12,21 @@ public interface BlockEdgeCrawler {
     Direction getAttachDirection();
     void setAttachDirection(Direction direction);
 
-/*    static boolean canAttachInPos(Mob mob, BlockPos pos) {
-        BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
-        for (Direction direction : Direction.values()){
-            mutableBlockPos.set(pos.relative(direction));
-            BlockState state = mob.level().getBlockState(pos);
-            if (state.isSolid() && state.getBlockPathType(mob.level(), mutableBlockPos, mob) != null
-                    && state.getBlockPathType(mob.level(), mutableBlockPos, mob).getMalus() >= 0F){
-                return true;
-            }
-        }
-        return false;
-    }*/
-
     default boolean attach(Mob mob, BlockPos pos) {
         BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
         for (Direction direction : Direction.values()){
             mutableBlockPos.set(pos.relative(direction));
-            BlockState state = mob.level().getBlockState(pos);
-            if (state.isSolid() && isBlockSafe(mob.level(), mutableBlockPos, state, mob)){
+            BlockState state = mob.level().getBlockState(mutableBlockPos);
+            if (canStandOn(mob, state, mutableBlockPos, direction)){
                 this.setAttachDirection(direction);
                 return true;
             }
         }
         return false;
+    }
+
+    default boolean canStandOn(Mob mob, BlockState state, BlockPos blockPos, Direction blockFace) {
+        return state.entityCanStandOnFace(mob.level(), blockPos, mob, blockFace) && isBlockSafe(mob.level(), blockPos, state, mob);
     }
 
     default boolean isBlockSafe(BlockGetter blockGetter, BlockPos pos, BlockState state, Mob mob){
