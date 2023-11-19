@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.Node;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +19,12 @@ public class BlockEdgeNode extends Node{
             Codec.INT.fieldOf("x").forGetter(BlockEdgeNode::getX),
             Codec.INT.fieldOf("y").forGetter(BlockEdgeNode::getY),
             Codec.INT.fieldOf("z").forGetter(BlockEdgeNode::getZ),
-            Direction.CODEC.fieldOf("edge").forGetter(BlockEdgeNode::getEdge)
+            Direction.CODEC.fieldOf("edge").forGetter(BlockEdgeNode::getEdge),
+            Codec.STRING.fieldOf("type").forGetter(BlockEdgeNode::getTypeName),
+            Codec.FLOAT.fieldOf("walkedDistance").forGetter(edgeNode -> edgeNode.walkedDistance),
+            Codec.FLOAT.fieldOf("costMalus").forGetter(edgeNode -> edgeNode.costMalus),
+            Codec.BOOL.fieldOf("closed").forGetter(edgeNode -> edgeNode.closed),
+            Codec.FLOAT.fieldOf("f").forGetter(edgeNode -> edgeNode.f)
     ).apply(instance, BlockEdgeNode::new));
 
     public BlockEdgeNode(int x, int y, int z, Direction edge) {
@@ -27,6 +33,19 @@ public class BlockEdgeNode extends Node{
         this.y = y;
         this.z = z;
         this.edge = edge;
+    }
+
+    public BlockEdgeNode(int x, int y, int z, Direction edge, String typeName, float walkedDistance, float costMalus, boolean closed, float f) {
+        super(x,y,z);
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.edge = edge;
+        this.type = BlockPathTypes.valueOf(typeName);
+        this.walkedDistance = walkedDistance;
+        this.costMalus = costMalus;
+        this.closed = closed;
+        this.f = f;
     }
 
     public BlockEdgeNode(BlockPos pos, Direction edge){
@@ -65,5 +84,9 @@ public class BlockEdgeNode extends Node{
 
     public Direction getEdge() {
         return edge;
+    }
+
+    public String getTypeName(){
+        return this.type.name();
     }
 }

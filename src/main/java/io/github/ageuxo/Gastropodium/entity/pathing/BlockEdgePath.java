@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 @MethodsReturnNonnullByDefault
-public class BlockEdgePath extends Path{
+public class BlockEdgePath extends Path {
     private final BlockEdgeNode[] closedSet = new BlockEdgeNode[0];
     private final BlockEdgeNode[] openSet = new BlockEdgeNode[0];
     private final BlockEdgeNode target;

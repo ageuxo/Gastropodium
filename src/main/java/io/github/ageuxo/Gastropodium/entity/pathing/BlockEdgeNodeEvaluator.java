@@ -11,6 +11,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.PathNavigationRegion;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -27,9 +28,6 @@ public class BlockEdgeNodeEvaluator extends NodeEvaluator {
     protected PathNavigationRegion level;
     protected Mob mob;
     protected final Int2ObjectMap<BlockEdgeNode> nodes = new Int2ObjectOpenHashMap<>();
-    protected int entityWidth;
-    protected int entityHeight;
-    protected int entityDepth;
 
     private final Long2ObjectMap<BlockPathTypes> pathTypesByPosCache = new Long2ObjectArrayMap<>();
 
@@ -97,16 +95,20 @@ public class BlockEdgeNodeEvaluator extends NodeEvaluator {
         return neighborCount;
     }
 
-    private boolean isPathfindable(BlockPos.MutableBlockPos mutableBlockPos) {
-        return this.level.getBlockState(mutableBlockPos).isPathfindable(level, mutableBlockPos, PathComputationType.LAND);
+    private boolean isPathfindable(BlockPos blockPos) {
+        return this.level.getBlockState(blockPos).isPathfindable(this.level, blockPos, PathComputationType.LAND);
     }
 
     protected BlockEdgeNode getEdgeNode(BlockPos pos, Direction edge){
         BlockPos checkPos = pos.relative(edge);
         if (!this.level.getBlockState(checkPos).isPathfindable(this.level, checkPos, PathComputationType.LAND)){
-            return new BlockEdgeNode(pos, edge);
+            BlockEdgeNode node = new BlockEdgeNode(pos, edge);
+            node.type = getBlockPathType(this.mob, pos);
+            return node;
         } else {
-            return new  BlockEdgeNode(pos, Direction.DOWN);
+            BlockEdgeNode node = new BlockEdgeNode(pos, Direction.DOWN);
+            node.type = getBlockPathType(this.mob, pos);
+            return node;
         }
     }
 
@@ -126,10 +128,24 @@ public class BlockEdgeNodeEvaluator extends NodeEvaluator {
 
     protected BlockPathTypes getCachedBlockType(Mob pEntity, int pX, int pY, int pZ) {
         long longPos = BlockPos.asLong(pX, pY, pZ);
-        return this.pathTypesByPosCache.computeIfAbsent(longPos, (d) -> this.getBlockPathType(this.level, pX, pY, pZ, pEntity));
+        return this.pathTypesByPosCache.computeIfAbsent(longPos, (d) -> this.getBlockPathTypeRaw(this.level, pX, pY, pZ, pEntity));
     }
 
     protected BlockPathTypes getBlockPathType(Mob pEntityliving, BlockPos pPos) {
         return this.getCachedBlockType(pEntityliving, pPos.getX(), pPos.getY(), pPos.getZ());
+    }
+
+    public BlockPathTypes getBlockPathTypeRaw(BlockGetter level, int x, int y, int z, Mob mob) {
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos(x, y, z);
+        for (Direction direction : Direction.values()){
+            BlockPos relative = pos.relative(direction);
+            BlockState state = level.getBlockState(relative);
+            BlockPathTypes type = state.getBlockPathType(level, relative, mob);
+            if (type != null && type.getDanger() != null) {
+                return type.getDanger();
+            }
+        }
+
+        return this.isPathfindable(pos.set(x, y, z)) ? BlockPathTypes.WALKABLE : BlockPathTypes.BLOCKED;
     }
 }

@@ -2,8 +2,8 @@ package io.github.ageuxo.Gastropodium.entity.pathing;
 
 import com.google.common.collect.ImmutableSet;
 import io.github.ageuxo.Gastropodium.mixins.PathNavigationAccessor;
-import io.github.ageuxo.Gastropodium.network.BlockEdgePathDebugS2CPacket;
-import io.github.ageuxo.Gastropodium.network.PacketHandler;
+import io.github.ageuxo.Gastropodium.network.PathNavigationExtensions;
+import io.github.ageuxo.Gastropodium.network.VanillaDebugPacketHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
@@ -16,14 +16,13 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.PathNavigationRegion;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class BlockEdgePathNavigation extends PathNavigation {
+public class BlockEdgePathNavigation extends PathNavigation implements PathNavigationExtensions<BlockEdgePath> {
     protected BlockEdgeNodeEvaluator edgeNodeEvaluator;
     private final BlockEdgeCrawler crawler;
     protected final BlockEdgePathFinder edgePathFinder;
@@ -39,14 +38,14 @@ public class BlockEdgePathNavigation extends PathNavigation {
         this.edgePathFinder = this.createPathFinder(i);
     }
 
-    @Override
+   /* @Override
     public void tick() {
         super.tick();
-        if (!this.level.isClientSide){
+        if (!this.level.isClientSide && this.path != null){
             PacketHandler.INSTANCE.send(PacketDistributor.TRACKING_ENTITY.with(()->this.mob),
                     new BlockEdgePathDebugS2CPacket((BlockEdgePath) this.path, this.level, this.mob.getId(), this.maxDistanceToWaypoint));
         }
-    }
+    }*/
 
     @Nullable
     @Override
@@ -149,4 +148,9 @@ public class BlockEdgePathNavigation extends PathNavigation {
 
     @Override
     protected void trimPath() {}
+
+    @Override
+    public void sendPathfindingPacket(Level level, Mob mob, BlockEdgePath path, float maxDistanceToTarget) {
+        VanillaDebugPacketHelper.sendBlockEdgePathfindingPacket(level, mob, path, maxDistanceToTarget);
+    }
 }

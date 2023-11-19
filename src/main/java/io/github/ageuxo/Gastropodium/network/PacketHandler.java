@@ -16,5 +16,6 @@ public class PacketHandler {
     public static void register(){
         int id = 0;
         INSTANCE.registerMessage(id++, BlockEdgePathDebugS2CPacket.class, BlockEdgePathDebugS2CPacket::encode, BlockEdgePathDebugS2CPacket::decode, BlockEdgePathDebugS2CPacket::handle);
+        INSTANCE.registerMessage(id++, VanillaPathDebugS2CPacket.class, VanillaPathDebugS2CPacket::encode, VanillaPathDebugS2CPacket::decode, VanillaPathDebugS2CPacket::handle);
     }
 }
