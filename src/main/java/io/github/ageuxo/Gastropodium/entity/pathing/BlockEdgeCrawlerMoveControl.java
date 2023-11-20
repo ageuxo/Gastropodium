@@ -21,11 +21,10 @@ public class BlockEdgeCrawlerMoveControl extends MoveControl {
             if (this.operation == Operation.MOVE_TO) {
                 double deltaX = this.wantedX - this.crawler.getX();
                 double deltaY = this.wantedY - this.crawler.getY();
-                double deltaZ = this.wantedX - this.crawler.getZ();
-                double dSquared = (deltaX * deltaX) + (deltaY * deltaY )+ (deltaZ * deltaZ);
+                double deltaZ = this.wantedZ - this.crawler.getZ(); //comment of shame for not noticing I used the wrong var here
+                double dSquared = (deltaX * deltaX) + (deltaY * deltaY ) + (deltaZ * deltaZ);
                 this.operation = Operation.WAIT;
-                Direction direction = this.crawler.attachDirection;
-                float yRot = (float) ((Mth.atan2(deltaZ, deltaX) * (180F/Math.PI))-180F);
+                float yRot = (float) ((Mth.atan2(deltaZ, deltaX) * (180F/Math.PI))-90F); // TODO make the snail stop spinning in place
                 this.crawler.setYRot(yRot);
 
                 if (dSquared < Double.MIN_VALUE){

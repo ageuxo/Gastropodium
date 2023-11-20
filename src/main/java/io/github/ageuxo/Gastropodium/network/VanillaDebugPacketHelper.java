@@ -7,7 +7,6 @@ import io.github.ageuxo.Gastropodium.entity.pathing.BlockEdgePath;
 import io.github.ageuxo.Gastropodium.mixins.PathAccessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.Node;
