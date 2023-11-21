@@ -6,6 +6,7 @@ import io.github.ageuxo.Gastropodium.network.PathNavigationExtensions;
 import io.github.ageuxo.Gastropodium.network.VanillaDebugPacketHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
@@ -55,20 +56,16 @@ public class BlockEdgePathNavigation extends PathNavigation implements PathNavig
 
     @Nullable
     protected BlockEdgePath createPath(Set<BlockPos> pTargets, int pRegionOffset, boolean pOffsetUpward, int pAccuracy, float pFollowRange) {
-        if (pTargets.isEmpty()) {
-            return null;
-        } else if (this.mob.getY() < (double)this.level.getMinBuildHeight()) {
-            return null;
-        } else if (!this.canUpdatePath()) {
+        if (pTargets.isEmpty() || this.mob.getY() < (double) this.level.getMinBuildHeight() || !this.canUpdatePath()) {
             return null;
         } else if (this.path != null && !this.path.isDone() && pTargets.contains(this.getTargetPos())) {
             return (BlockEdgePath) this.path;
         } else {
             this.level.getProfiler().push("pathfind");
             BlockPos blockpos = pOffsetUpward ? this.mob.blockPosition().above() : this.mob.blockPosition();
-            int i = (int)(pFollowRange + (float)pRegionOffset);
+            int i = (int) (pFollowRange + (float) pRegionOffset);
             PathNavigationRegion pathnavigationregion = new PathNavigationRegion(this.level, blockpos.offset(-i, -i, -i), blockpos.offset(i, i, i));
-            BlockEdgePath path = this.edgePathFinder.findEdgePath(pathnavigationregion, this.mob, findNodesAtTargets(pTargets, this.level, this.mob), pFollowRange, pAccuracy, ((PathNavigationAccessor)this).getMaxVisitedNodesMultiplier());
+            BlockEdgePath path = this.edgePathFinder.findEdgePath(pathnavigationregion, this.mob, findNodesAtTargets(pTargets, this.level, this.mob), pFollowRange, pAccuracy, ((PathNavigationAccessor) this).getMaxVisitedNodesMultiplier());
             this.level.getProfiler().pop();
             if (path != null) {
                 ((PathNavigationAccessor) this).setTargetPos(path.getTarget());
@@ -84,6 +81,50 @@ public class BlockEdgePathNavigation extends PathNavigation implements PathNavig
     public boolean moveTo(@NotNull Entity entity, double speed) {
         BlockEdgePath path = this.createPath(ImmutableSet.of(entity.blockPosition()), 16, false, 1, (float) this.mob.getAttributeValue(Attributes.FOLLOW_RANGE));
         return path != null && this.moveTo(path, speed);
+    }
+
+    protected void followThePath() {
+        Vec3 mobPos = this.getTempMobPos();
+        this.maxDistanceToWaypoint = this.mob.getBbWidth() > 0.75F ? this.mob.getBbWidth() / 2.0F : 0.75F - this.mob.getBbWidth() / 2.0F;
+        if (isNextNodeInRange() && this.shouldTargetNextNodeInDirection(mobPos)) {
+            this.path.advance();
+        }
+
+        this.doStuckDetection(mobPos);
+    }
+
+    private boolean shouldTargetNextNodeInDirection(Vec3 mobPos) {
+        if (this.path.getNextNodeIndex() + 1 >= this.path.getNodeCount()) {
+            return false;
+        } else {
+            Vec3 nodePos = this.path.getNextEntityPos(this.mob);
+            if (!mobPos.closerThan(nodePos, 2.0D)) {
+                return false;
+            } else {
+                Vec3 nextNodePos = Vec3.atBottomCenterOf(this.path.getNodePos(this.path.getNextNodeIndex() + 1));
+                Vec3 deltaNodePos = nodePos.subtract(mobPos);
+                Vec3 deltaNextNodePos = nextNodePos.subtract(mobPos);
+                double nodePosLength = deltaNodePos.lengthSqr();
+                double nextNodePosLength = deltaNextNodePos.lengthSqr();
+                boolean nextNodeCloserThanNode = nextNodePosLength < nodePosLength;
+                boolean currentlyAtNodePos = nodePosLength < 0.5D;
+                if (!nextNodeCloserThanNode && !currentlyAtNodePos) {
+                    return false;
+                } else {
+                    Vec3 nodePosNormal = deltaNodePos.normalize();
+                    Vec3 nextNodePosNormal = deltaNextNodePos.normalize();
+                    return nextNodePosNormal.dot(nodePosNormal) < 0.0D;
+                }
+            }
+        }
+    }
+
+    private boolean isNextNodeInRange() {
+        Vec3i nodePos = this.path.getNextNodePos();
+        double dX = Math.abs(this.mob.getX() - ((double)nodePos.getX() + (this.mob.getBbWidth() + 1) / 2D)); //Forge: Fix MC-94054
+        double dY = Math.abs(this.mob.getY() - ((double)nodePos.getY() + (this.mob.getBbHeight() + 1) / 2D));
+        double dZ = Math.abs(this.mob.getZ() - ((double)nodePos.getZ() + (this.mob.getBbWidth() + 1) / 2D)); //Forge: Fix MC-94054
+        return dX <= (double) this.maxDistanceToWaypoint && dZ <= (double) this.maxDistanceToWaypoint && dY <= (double) this.maxDistanceToWaypoint;
     }
 
     protected static Set<BlockEdgeNode> findNodesAtTargets(Set<BlockPos> targets, BlockGetter blockGetter, Mob mob){
@@ -123,7 +164,7 @@ public class BlockEdgePathNavigation extends PathNavigation implements PathNavig
 
     @Override
     public boolean canUpdatePath() {
-        return crawler.isAttached() || crawler.attach(mob, mob.blockPosition());
+        return crawler.isAttached();
     }
 
     @Override
