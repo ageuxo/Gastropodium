@@ -1,5 +1,6 @@
 package io.github.ageuxo.Gastropodium.mixins;
 
+import io.github.ageuxo.Gastropodium.GastropodiumMod;
 import io.github.ageuxo.Gastropodium.entity.pathing.BlockEdgePath;
 import io.github.ageuxo.Gastropodium.network.PathNavigationExtensions;
 import io.github.ageuxo.Gastropodium.network.VanillaDebugPacketHelper;
@@ -20,7 +21,7 @@ public abstract class PathNavigationMixins implements PathNavigationExtensions<P
 
     @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/game/DebugPackets;sendPathFindingPacket(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/Mob;Lnet/minecraft/world/level/pathfinder/Path;F)V"))
     public void sendPathfindingPacket(Level pLevel, Mob pMob, Path pPath, float pMaxDistanceToWaypoint){
-        if (false){
+        if (GastropodiumMod.DEBUG){
             if (pPath instanceof BlockEdgePath edgePath) {
                 VanillaDebugPacketHelper.sendBlockEdgePathfindingPacket(pLevel, pMob, edgePath, pMaxDistanceToWaypoint);
             } else {

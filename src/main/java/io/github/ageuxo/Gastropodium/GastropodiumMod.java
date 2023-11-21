@@ -6,10 +6,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 
 @Mod(GastropodiumMod.MODID)
 public class GastropodiumMod {
     public static final String MODID = "gastropodium";
+    public static boolean DEBUG = !FMLEnvironment.production;
 
     public GastropodiumMod(){
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
