@@ -43,15 +43,6 @@ public class BlockEdgePathNavigation extends PathNavigation implements PathNavig
         this.edgePathFinder = this.createPathFinder(i);
     }
 
-   /* @Override
-    public void tick() {
-        super.tick();
-        if (!this.level.isClientSide && this.path != null){
-            PacketHandler.INSTANCE.send(PacketDistributor.TRACKING_ENTITY.with(()->this.mob),
-                    new BlockEdgePathDebugS2CPacket((BlockEdgePath) this.path, this.level, this.mob.getId(), this.maxDistanceToWaypoint));
-        }
-    }*/
-
     @Nullable
     @Override
     public BlockEdgePath getPath() {
@@ -92,7 +83,7 @@ public class BlockEdgePathNavigation extends PathNavigation implements PathNavig
         MoveControl moveControl = this.mob.getMoveControl();
 //        LOGGER.debug("{}, {} {} {}", mobPos, moveControl.getWantedX(), moveControl.getWantedY(), moveControl.getWantedZ());
         this.maxDistanceToWaypoint = this.mob.getBbWidth() > 0.75F ? this.mob.getBbWidth() / 2.0F : 0.75F - this.mob.getBbWidth() / 2.0F;
-        if (isNextNodeInRange() && this.shouldTargetNextNodeInDirection(mobPos)) { // TODO it doesn't update where it wants to go
+        if (isNextNodeInRange() && this.shouldTargetNextNodeInDirection(mobPos)) {
             this.getPath().advance();
         }
 
