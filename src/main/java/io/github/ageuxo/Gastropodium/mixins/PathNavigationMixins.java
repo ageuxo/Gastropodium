@@ -1,7 +1,7 @@
 package io.github.ageuxo.Gastropodium.mixins;
 
 import io.github.ageuxo.Gastropodium.GastropodiumMod;
-import io.github.ageuxo.Gastropodium.network.PathNavigationExtensions;
+import io.github.ageuxo.Gastropodium.entity.pathing.PathNavigationExtensions;
 import io.github.ageuxo.Gastropodium.network.VanillaDebugPacketHelper;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;

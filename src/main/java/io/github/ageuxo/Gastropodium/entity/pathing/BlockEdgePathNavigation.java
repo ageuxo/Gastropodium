@@ -3,7 +3,6 @@ package io.github.ageuxo.Gastropodium.entity.pathing;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.logging.LogUtils;
 import io.github.ageuxo.Gastropodium.mixins.PathNavigationAccessor;
-import io.github.ageuxo.Gastropodium.network.PathNavigationExtensions;
 import io.github.ageuxo.Gastropodium.network.VanillaDebugPacketHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

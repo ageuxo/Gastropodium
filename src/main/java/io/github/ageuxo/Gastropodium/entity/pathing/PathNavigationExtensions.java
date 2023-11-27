@@ -1,4 +1,4 @@
-package io.github.ageuxo.Gastropodium.network;
+package io.github.ageuxo.Gastropodium.entity.pathing;
 
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
