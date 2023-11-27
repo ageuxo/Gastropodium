@@ -2,11 +2,16 @@ package io.github.ageuxo.Gastropodium.entity.pathing;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.util.profiling.metrics.MetricCategory;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.PathNavigationRegion;
+import net.minecraft.world.level.pathfinder.Node;
+import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.level.pathfinder.PathFinder;
+import net.minecraft.world.level.pathfinder.Target;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -29,13 +34,29 @@ public class BlockEdgePathFinder extends PathFinder {
     }
 
     @Nullable
-    public BlockEdgePath findEdgePath(PathNavigationRegion pRegion, Mob pMob, Set<BlockEdgeNode> pTargetPositions, float pMaxRange, int pAccuracy, float pSearchDepthMultiplier) {
-        this.openSet.clear();
-        this.nodeEvaluator.prepare(pRegion, pMob);
-        BlockEdgeNode node = this.nodeEvaluator.getStart();
-        Map<BlockEdgeTarget, BlockEdgeNode> map = pTargetPositions.stream().collect(Collectors.toMap(this.nodeEvaluator::getGoal, Function.identity()));
+    @Override
+    public Path findPath(PathNavigationRegion pRegion, Mob pMob, Set<BlockPos> pTargetPositions, float pMaxRange, int pAccuracy, float pSearchDepthMultiplier) {
+        Set<BlockEdgeNode> targetNodes = new HashSet<>();
+        pTargetPositions.forEach(blockPos -> {
+            BlockPos.MutableBlockPos pos = blockPos.mutable();
+            for (Direction direction : Direction.values()){
+                BlockPos.MutableBlockPos moved = pos.move(direction);
+                if (pRegion.getBlockState(moved).entityCanStandOnFace(pRegion, moved, pMob, direction.getOpposite())){
+                    targetNodes.add(this.nodeEvaluator.getEdgeNode(blockPos, direction));
+                }
+            }
+        });
+        return findEdgePath(pRegion, pMob, targetNodes, pMaxRange, pAccuracy, pSearchDepthMultiplier);
+    }
 
-        BlockEdgePath path = this.findPath(pRegion.getProfiler(), node, map, pMaxRange, pAccuracy, pSearchDepthMultiplier);
+    @Nullable
+    public BlockEdgePath findEdgePath(PathNavigationRegion region, Mob mob, Set<BlockEdgeNode> targetNodes, float maxRange, int accuracy, float searchDepthMultiplier) {
+        this.openSet.clear();
+        this.nodeEvaluator.prepare(region, mob);
+        BlockEdgeNode node = this.nodeEvaluator.getStart();
+        Map<BlockEdgeTarget, BlockEdgeNode> map = targetNodes.stream().collect(Collectors.toMap(this.nodeEvaluator::getGoal, Function.identity()));
+
+        BlockEdgePath path = this.findPath(region.getProfiler(), node, map, maxRange, accuracy, searchDepthMultiplier);
         this.nodeEvaluator.done();
         return path;
     }
