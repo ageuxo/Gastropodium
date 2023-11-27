@@ -25,15 +25,21 @@ public class BlockEdgePath extends Path {
     public static Codec<BlockEdgePath> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             BlockEdgeNode.CODEC.listOf().fieldOf("nodes").forGetter(BlockEdgePath::getEdgeNodes),
             BlockEdgeNode.CODEC.fieldOf("target").forGetter(BlockEdgePath::getTargetNode),
-            Codec.BOOL.fieldOf("reached").forGetter(BlockEdgePath::canReach)
+            Codec.BOOL.fieldOf("reached").forGetter(BlockEdgePath::canReach),
+            Codec.INT.fieldOf("nextNode").forGetter(BlockEdgePath::getNextNodeIndex)
     ).apply(instance, BlockEdgePath::new));
 
-    public BlockEdgePath(List<BlockEdgeNode> edgeNodes, BlockEdgeNode target, boolean reached) {
+    public BlockEdgePath(List<BlockEdgeNode> edgeNodes, BlockEdgeNode target, boolean reached, int nextIndex) {
         super(edgeNodes.stream().map(edgeNode -> (Node)edgeNode).toList(), target.asBlockPos(), reached);
         this.edgeNodes = edgeNodes;
         this.target = target;
         this.distToTarget = edgeNodes.isEmpty() ? Float.MAX_VALUE : getEdgeNode(edgeNodes.size()-1).distanceTo(target);
         this.reached = reached;
+        this.nextIndex = nextIndex;
+    }
+
+    public BlockEdgePath(List<BlockEdgeNode> list, BlockEdgeNode pTargetPos, boolean pReachesTarget) {
+        this(list, pTargetPos, pReachesTarget, 0);
     }
 
     @Override

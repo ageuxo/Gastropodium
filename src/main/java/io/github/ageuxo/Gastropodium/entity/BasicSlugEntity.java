@@ -44,7 +44,7 @@ public class BasicSlugEntity extends Animal implements BlockEdgeCrawler {
     public void tick() {
         super.tick();
         if (this.level().isClientSide){
-            setupAnimationStates();
+//            setupAnimationStates();
         }
         ProfilerFiller profiler = this.level().getProfiler();
         profiler.push("slug_attach_check");
@@ -65,7 +65,7 @@ public class BasicSlugEntity extends Animal implements BlockEdgeCrawler {
         return true;
     }
 
-    private void setupAnimationStates(){
+ /*   private void setupAnimationStates(){
         if (this.idleAnimationTimeout <= 0){
             this.idleAnimationTimeout = this.random.nextInt(48) + 80;
             this.idleAnimationState.start(this.tickCount);
@@ -85,15 +85,15 @@ public class BasicSlugEntity extends Animal implements BlockEdgeCrawler {
 
         this.walkAnimation.update(state, 0.2f);
 
-    }
+    }*/
 
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(0, new BreedGoal(this, 1.2D));
+//        this.goalSelector.addGoal(0, new BreedGoal(this, 1.2D));
         this.goalSelector.addGoal(1, new TemptGoal(this, 1.2D, Ingredient.of(Tags.Items.CROPS_BEETROOT), false));
-        this.goalSelector.addGoal(2, new FollowParentGoal(this, 1.1D));
-        this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, Player.class, 3.0F));
-        this.goalSelector.addGoal(4, new RandomStrollGoal(this, 1.0D));
+//        this.goalSelector.addGoal(2, new FollowParentGoal(this, 1.1D));
+//        this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, Player.class, 3.0F));
+//        this.goalSelector.addGoal(4, new RandomStrollGoal(this, 1.0D));
     }
 
     public static AttributeSupplier.Builder createAttributes(){

@@ -1,6 +1,7 @@
 package io.github.ageuxo.Gastropodium.entity.pathing;
 
 import com.google.common.collect.ImmutableSet;
+import com.mojang.logging.LogUtils;
 import io.github.ageuxo.Gastropodium.mixins.PathNavigationAccessor;
 import io.github.ageuxo.Gastropodium.network.PathNavigationExtensions;
 import io.github.ageuxo.Gastropodium.network.VanillaDebugPacketHelper;
@@ -11,6 +12,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -19,11 +21,13 @@ import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class BlockEdgePathNavigation extends PathNavigation implements PathNavigationExtensions<BlockEdgePath> {
+    public static final Logger LOGGER = LogUtils.getLogger();
     protected BlockEdgeNodeEvaluator edgeNodeEvaluator;
     private final BlockEdgeCrawler crawler;
     protected final BlockEdgePathFinder edgePathFinder;
@@ -59,7 +63,7 @@ public class BlockEdgePathNavigation extends PathNavigation implements PathNavig
         if (pTargets.isEmpty() || this.mob.getY() < (double) this.level.getMinBuildHeight() || !this.canUpdatePath()) {
             return null;
         } else if (this.path != null && !this.path.isDone() && pTargets.contains(this.getTargetPos())) {
-            return (BlockEdgePath) this.path;
+            return getPath();
         } else {
             this.level.getProfiler().push("pathfind");
             BlockPos blockpos = pOffsetUpward ? this.mob.blockPosition().above() : this.mob.blockPosition();
@@ -85,24 +89,26 @@ public class BlockEdgePathNavigation extends PathNavigation implements PathNavig
 
     protected void followThePath() {
         Vec3 mobPos = this.getTempMobPos();
+        MoveControl moveControl = this.mob.getMoveControl();
+//        LOGGER.debug("{}, {} {} {}", mobPos, moveControl.getWantedX(), moveControl.getWantedY(), moveControl.getWantedZ());
         this.maxDistanceToWaypoint = this.mob.getBbWidth() > 0.75F ? this.mob.getBbWidth() / 2.0F : 0.75F - this.mob.getBbWidth() / 2.0F;
-        if (isNextNodeInRange() && this.shouldTargetNextNodeInDirection(mobPos)) {
-            this.path.advance();
+        if (isNextNodeInRange() && this.shouldTargetNextNodeInDirection(mobPos)) { // TODO it doesn't update where it wants to go
+            this.getPath().advance();
         }
 
         this.doStuckDetection(mobPos);
     }
 
     private boolean shouldTargetNextNodeInDirection(Vec3 mobPos) {
-        if (this.path.getNextNodeIndex() + 1 >= this.path.getNodeCount()) {
+        if (this.getPath().getNextNodeIndex() + 1 >= this.getPath().getNodeCount()) {
             return false;
         } else {
-            Vec3 nodePos = this.path.getNextEntityPos(this.mob);
-            if (!mobPos.closerThan(nodePos, 2.0D)) {
+            Vec3 nodePos = this.getPath().getNextEntityPos(this.mob);
+            if (!mobPos.closerThan(nodePos, this.mob.getBbWidth() >= 1.0D ? this.mob.getBbWidth() : 1.0D)) {
                 return false;
             } else {
-                Vec3 nextNodePos = Vec3.atBottomCenterOf(this.path.getNodePos(this.path.getNextNodeIndex() + 1));
-                Vec3 deltaNodePos = nodePos.subtract(mobPos);
+                Vec3 nextNodePos = this.getPath().getEntityPosAtNode(this.mob, this.getPath().getNextNodeIndex() + 1);
+                Vec3 deltaNodePos = nodePos.subtract(mobPos); // TODO I don't really understand this
                 Vec3 deltaNextNodePos = nextNodePos.subtract(mobPos);
                 double nodePosLength = deltaNodePos.lengthSqr();
                 double nextNodePosLength = deltaNextNodePos.lengthSqr();
@@ -120,9 +126,9 @@ public class BlockEdgePathNavigation extends PathNavigation implements PathNavig
     }
 
     private boolean isNextNodeInRange() {
-        Vec3i nodePos = this.path.getNextNodePos();
+        Vec3i nodePos = this.getPath().getNextNodePos();
         double dX = Math.abs(this.mob.getX() - ((double)nodePos.getX() + (this.mob.getBbWidth() + 1) / 2D)); //Forge: Fix MC-94054
-        double dY = Math.abs(this.mob.getY() - ((double)nodePos.getY() + (this.mob.getBbHeight() + 1) / 2D));
+        double dY = Math.abs(this.mob.getY() - ((double)nodePos.getY() + (this.mob.getBbHeight()) / 2D));
         double dZ = Math.abs(this.mob.getZ() - ((double)nodePos.getZ() + (this.mob.getBbWidth() + 1) / 2D)); //Forge: Fix MC-94054
         return dX <= (double) this.maxDistanceToWaypoint && dZ <= (double) this.maxDistanceToWaypoint && dY <= (double) this.maxDistanceToWaypoint;
     }
