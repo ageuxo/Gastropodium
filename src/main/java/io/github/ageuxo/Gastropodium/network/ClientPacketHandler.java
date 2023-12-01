@@ -1,6 +1,7 @@
 package io.github.ageuxo.Gastropodium.network;
 
 import com.mojang.logging.LogUtils;
+import io.github.ageuxo.Gastropodium.entity.pathing.DebugRendererExtension;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.pathfinder.Path;
 import org.slf4j.Logger;
@@ -10,7 +11,7 @@ public class ClientPacketHandler {
     public static void handleBlockEdgePathDebugPacket(BlockEdgePathDebugS2CPacket packet){
         Minecraft instance = Minecraft.getInstance();
         if (instance.level != null){
-            instance.debugRenderer.pathfindingRenderer
+            ((DebugRendererExtension)instance.debugRenderer).gastropodium$getBlockEdgePathfindingRenderer()
                     .addPath(packet.getMobId(), packet.getPath(), packet.getMaxDistanceToWaypoint());
         }
     }
